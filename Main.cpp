@@ -4,10 +4,12 @@
 #include <complex>
 #include <iostream>
 
-static const int WINDOW_WIDTH = 800;
-static const int WINDOW_HEIGHT = 800;
+static const int WINDOW_WIDTH = 1000;
+static const int WINDOW_HEIGHT = 1000;
 
 static const float LIMIT = 1.0f;
+static const float STEP = 0.05f;
+static const int ITERATIONS = 500;
 
 SDL_Event event;
 SDL_Renderer* renderer;
@@ -54,14 +56,14 @@ void DrawMandelbrot() {
 
     
      SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-for (float y = -LIMIT; y < LIMIT; y += 0.1f)
+for (float y = -LIMIT; y < LIMIT; y += STEP)
         {
-    for (float x = -LIMIT; x < LIMIT; x += 0.1f)
+    for (float x = -LIMIT; x < LIMIT; x += STEP)
     {
         
 
 
-        for (size_t j = 0; j < 200; j++)
+        for (size_t j = 0; j < ITERATIONS; j++)
         {
             std::complex<float> n;
             n.real(0);
@@ -73,9 +75,11 @@ for (float y = -LIMIT; y < LIMIT; y += 0.1f)
             for (size_t i = 0; i < j; i++)
             {
                n = n*n + c ;
-            //    if (sqrtf(n.real()*n.real() + n.imag()*n.imag()) > 2.0f)
-            //      goto xloop;
+             
             }
+
+            // if (sqrtf(n.real()*n.real() + n.imag()*n.imag()) > 2.0f)
+            //      goto xloop;
             
             
             DrawPixel(n.real(), n.imag());
@@ -94,6 +98,8 @@ for (float y = -LIMIT; y < LIMIT; y += 0.1f)
         
            
         xloop:;
+
+         SDL_RenderPresent(renderer);
         
     }
 
