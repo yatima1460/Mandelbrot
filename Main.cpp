@@ -4,17 +4,23 @@
 #include <complex>
 #include <iostream>
 
-static const int WINDOW_SIDE = 640;
-static const int ITERATIONS = 500;
+static const int WINDOW_SIDE = 1000;
+static const int ITERATIONS = 200;
+
+
+// <1.0 = you risk to generate an image with holes (super fast)
+// 1.0 = 1 complex point tested / pixel (normal nice image)
+// >1.0 = more complex points tested / pixel (super-resolution SLOWER)
+static const float PRECISION = 4.0f;
 
 // static const float LIMIT = 2.0;
 // static const float STEP = 0.004;
 // static const int ITERATIONS = 500;
 
+// The zoom level
 static const float LIMIT = 2.0;
 
-
-static const float STEP = (LIMIT*2.0)/WINDOW_SIDE;
+static const float STEP = ((LIMIT*2.0)/WINDOW_SIDE)/PRECISION;
 
 SDL_Event event;
 SDL_Renderer* renderer;
@@ -69,11 +75,18 @@ void DrawMandelbrot() {
 			
 			for (size_t i = 0; i < ITERATIONS; i++) {
 				n = n * n + c;
+                if (sqrtf(n.real() * n.real() + n.imag() * n.imag()) > 2.0) 
+                {
+				    float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_SIDE);
+                    float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_SIDE);
+                    float color = ((float)i / (float)ITERATIONS)*255;
+                    SDL_SetRenderDrawColor(renderer, color, color, color, 255);
+                    SDL_RenderDrawPoint(renderer, fx, fy);
+                    break;
+			    }
 			}
 
-			if (sqrtf(n.real() * n.real() + n.imag() * n.imag()) < 2.0) {
-				DrawPixel(x, y);
-			}
+			
             
 		}
 
