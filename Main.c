@@ -2,11 +2,11 @@
 #include <assert.h>
 #include <complex.h>
 
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-// The window is a square for now
-static const int WINDOW_PIXELS_SIDE_LENGTH = 1000;
+
+
+static const int WINDOW_PIXELS_WIDTH = 1280;
+static const int WINDOW_PIXELS_HEIGHT = 720;
 
 // More iterations = slower but more sharp edges
 // Less iterations = faster but blobby Mandelbrot
@@ -19,6 +19,9 @@ static const float COLOR_MULTIPLIER = 4.0f;
 // Mandelbrot doesn't exist above distance 2 with 0,0 so it's pointless to go above
 static const float LIMIT = 2.0F;
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 SDL_Event event;
 SDL_Renderer* renderer;
 SDL_Window* window;
@@ -30,7 +33,7 @@ float map(const float x, const float in_min, const float in_max, const float out
 void InitVideo() {
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_CreateWindowAndRenderer(
-		WINDOW_PIXELS_SIDE_LENGTH, WINDOW_PIXELS_SIDE_LENGTH, SDL_WINDOW_OPENGL, &window, &renderer);
+		WINDOW_PIXELS_WIDTH, WINDOW_PIXELS_HEIGHT, 0, &window, &renderer);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 }
@@ -41,18 +44,19 @@ float* CalculateMandelbrot() {
 	complex float n = {0};
 	complex float c = {0};
 
-	float* stability = (float*)malloc(sizeof(float) * WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH);
+	float* stability = (float*)malloc(sizeof(float) * WINDOW_PIXELS_WIDTH * WINDOW_PIXELS_HEIGHT);
 	if (stability == NULL) {
 		fprintf(stderr, "Not enough memory!");
 		abort();
 	}
 
-	for (int i = 0; i < WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH; i++) {
-		const int px = i % WINDOW_PIXELS_SIDE_LENGTH;
-		const int py = i / WINDOW_PIXELS_SIDE_LENGTH;
+	for (int i = 0; i < WINDOW_PIXELS_WIDTH * WINDOW_PIXELS_HEIGHT; i++) {
+		const int px = i % WINDOW_PIXELS_WIDTH;
+		const int py = i / WINDOW_PIXELS_WIDTH;
 
-		const float x = map(px, 0, WINDOW_PIXELS_SIDE_LENGTH, -LIMIT, LIMIT);
-		const float y = map(py, 0, WINDOW_PIXELS_SIDE_LENGTH, -LIMIT, LIMIT);
+		const float offset = (WINDOW_PIXELS_WIDTH - WINDOW_PIXELS_HEIGHT)/2;
+		const float x = map(px, offset, offset+WINDOW_PIXELS_HEIGHT, -LIMIT, LIMIT);
+		const float y = map(py, 0, WINDOW_PIXELS_HEIGHT, -LIMIT, LIMIT);
 		n = 0 + 0 * I;
 		c = x + y * I;
 
@@ -78,11 +82,14 @@ float* CalculateMandelbrot() {
 
 void DrawMandelbrot(const float* const stabilityPoints) {
 	assert(stabilityPoints != NULL);
+	SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" );
+
+
 
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-	for (int i = 0; i < WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH; i++) {
-		const int x = i % WINDOW_PIXELS_SIDE_LENGTH;
-		const int y = i / WINDOW_PIXELS_SIDE_LENGTH;
+	for (int i = 0; i < WINDOW_PIXELS_WIDTH * WINDOW_PIXELS_HEIGHT; i++) {
+		const int x = i % WINDOW_PIXELS_WIDTH;
+		const int y = i / WINDOW_PIXELS_WIDTH;
 		const float color = stabilityPoints[i] * 255;
 
 		SDL_SetRenderDrawColor(
@@ -96,9 +103,13 @@ void DrawMandelbrot(const float* const stabilityPoints) {
 
 void WaitForExit() {
 	while (1) {
-		if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
-			break;
+		if (SDL_PollEvent(&event)) {
+			
+			if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
+				break;
+			}
 		}
+		
 	}
 }
 
