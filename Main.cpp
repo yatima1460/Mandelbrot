@@ -1,4 +1,4 @@
-#include <stdlib.h>
+
 
 #include <SDL2/SDL.h>
 #include <complex>
@@ -14,7 +14,7 @@ static const int ITERATIONS_PER_COMPLEX_NUMBER = 50;
 // <1.0 = you risk to generate an image with holes (super fast)
 // 1.0 = 1 complex point tested / pixel (normal nice image)
 // >1.0 = more complex points tested / pixel (super-resolution SLOWER)
-static const float PRECISION = 4.0f;
+static const float PRECISION = 4.0F;
 
 // static const float LIMIT = 2.0;
 // static const float STEP = 0.004;
@@ -29,29 +29,10 @@ SDL_Event event;
 SDL_Renderer* renderer;
 SDL_Window* window;
 
-float map(float x, float in_min, float in_max, float out_min, float out_max) {
+constexpr float map(const float x,const  float in_min,const  float in_max,const  float out_min,const  float out_max) {
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-float Distance(const int x0, const int y0, const int x1, const int y1) {
-	return sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
-}
-
-void DrawPointBlack(const int x, const int y) {
-	SDL_RenderDrawPoint(renderer, WINDOW_PIXELS_SIDE_LENGTH * 0.5 + x, WINDOW_PIXELS_SIDE_LENGTH * 0.5 + y);
-}
-
-void DrawPixel(const float x, const float y) {
-	float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
-	float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
-
-	SDL_RenderDrawPoint(renderer, fx, fy);
-}
-
-void DrawPointRed(const int x, const int y) {
-	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-	SDL_RenderDrawPoint(renderer, WINDOW_PIXELS_SIDE_LENGTH * 0.5 + x, WINDOW_PIXELS_SIDE_LENGTH * 0.5 + y);
-}
 
 void InitVideo() {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -62,45 +43,62 @@ void InitVideo() {
 	// SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 }
 
-void DrawMandelbrot() {
+std::vector<float> CalculateMandelbrot() {
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-	std::vector<float> stability;
+    std::complex<float> n;
+    std::complex<float> c;
+
+	std::vector<float> stability(WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH);
 	for (float x = -LIMIT; x < LIMIT; x += STEP) {
 		for (float y = -LIMIT; y < LIMIT; y += STEP) {
-			std::complex<float> n;
-			std::complex<float> c(x, y);
+
+			n.real(0);
+            n.imag(0);
+            c.real(x);
+            c.imag(y);
 
 			for (int i = 0; i < ITERATIONS_PER_COMPLEX_NUMBER; i++) {
+				// Multiply c = zoom level
+				// Add complex = offset
 				n = n * n + c;
+
+                // If the complex number distance with the origin is > 2 than it's unstable
 				if (n.real() * n.real() + n.imag() * n.imag() > 4.0) {
-					int fx = (int)map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
-					int fy = (int)map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
-					float color = ((float)i / (float)ITERATIONS_PER_COMPLEX_NUMBER) * 255;
-                    stability.push_back(color);
-                    
-					//stability[fy * WINDOW_PIXELS_SIDE_LENGTH + fx] = color;
+					const int fx = static_cast<int>(map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH));
+					const int fy = static_cast<int>(map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH));
+                    // Stability color is based on number of iterations reached
+					const float color = (static_cast<float>(i) / static_cast<float>(ITERATIONS_PER_COMPLEX_NUMBER));
+					stability[fy * WINDOW_PIXELS_SIDE_LENGTH + fx] = color;
 					break;
 				}
 			}
 		}
 	}
-	for (size_t i = 0; i < WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH; i++) {
-		const int x = i % WINDOW_PIXELS_SIDE_LENGTH;
-		const int y = i / WINDOW_PIXELS_SIDE_LENGTH;
-		const float color = stability[i];
-		SDL_SetRenderDrawColor(renderer, color, color, color, 255);
-		SDL_RenderDrawPoint(renderer, x, y);
-	}
-	SDL_RenderPresent(renderer);
-	SDL_SetWindowTitle(window, "Mandelbrot - Status: Done!");
+
+    return stability;
+
 	
 }
 
+void DrawMandelbrot(const std::vector<float> stabilityPoints)
+{
+    for (size_t i = 0; i < WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH; i++) {
+		const int x = i % WINDOW_PIXELS_SIDE_LENGTH;
+		const int y = i / WINDOW_PIXELS_SIDE_LENGTH;
+		const float color = stabilityPoints[i] * 255;
+		SDL_SetRenderDrawColor(renderer, color, color, color, 255);
+		SDL_RenderDrawPoint(renderer, x, y);
+	}
+    // Draw image on screen
+	SDL_RenderPresent(renderer);
+}
+
 void WaitForExit() {
-	while (1) {
-		if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
+	while (true) {
+		if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
 			break;
+		}
 	}
 }
 
@@ -110,9 +108,14 @@ void DestroyVideo() {
 	SDL_Quit();
 }
 
-int main(void) {
+int main() {
+    SDL_SetWindowTitle(window, "Mandelbrot - Status: Initializing...");
 	InitVideo();
-	DrawMandelbrot();
+    SDL_SetWindowTitle(window, "Mandelbrot - Status: Generating...");
+    const auto stabilityPoints = CalculateMandelbrot();
+    SDL_SetWindowTitle(window, "Mandelbrot - Status: Drawing...");
+	DrawMandelbrot(stabilityPoints);
+    SDL_SetWindowTitle(window, "Mandelbrot - Status: Done!");
 	WaitForExit();
 	DestroyVideo();
 
