@@ -47,9 +47,12 @@ float* CalculateMandelbrot() {
 		fprintf(stderr, "Not enough memory!");
 		abort();
 	}
+for (int px = 0; px < WINDOW_PIXELS_SIDE_LENGTH; px++) {
+	for (int py = 0; py < WINDOW_PIXELS_SIDE_LENGTH; py++) {
+		
 
-	for (float y = -LIMIT; y < LIMIT; y += STEP) {
-		for (float x = -LIMIT; x < LIMIT; x += STEP) {
+			const float x = map(px, 0, WINDOW_PIXELS_SIDE_LENGTH,-LIMIT, LIMIT );
+			const float y = map(py, 0, WINDOW_PIXELS_SIDE_LENGTH,-LIMIT, LIMIT );
 			n = 0 + 0 * I;
 			c = x + y * I;
 
@@ -64,11 +67,10 @@ float* CalculateMandelbrot() {
 
 				// If the complex number distance with the origin is > 2 than it's unstable
 				if (n_real * n_real + n_imag * n_imag > 4.0) {
-					const int fx = (int)(map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH));
-					const int fy = (int)(map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH));
+					
 					// Stability color is based on number of iterations reached
 					const float color = ((float)(i) / (float)(ITERATIONS_PER_COMPLEX_NUMBER));
-					*(stability + fy * WINDOW_PIXELS_SIDE_LENGTH + fx) = color;
+					*(stability + py * WINDOW_PIXELS_SIDE_LENGTH + px) = color;
 					break;
 				}
 				i++;
