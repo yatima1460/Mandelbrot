@@ -4,8 +4,12 @@
 #include <complex>
 #include <iostream>
 
-static const int WINDOW_SIDE = 1000;
-static const int ITERATIONS = 200;
+// The window is a square for now
+static const int WINDOW_PIXELS_SIDE_LENGTH = 1000;
+
+// More iterations = slower but more sharp edges
+// Less iterations = faster but blobby Mandelbrot
+static const int ITERATIONS_PER_COMPLEX_NUMBER = 50;
 
 
 // <1.0 = you risk to generate an image with holes (super fast)
@@ -18,9 +22,9 @@ static const float PRECISION = 4.0f;
 // static const int ITERATIONS = 500;
 
 // The zoom level
+// Mandelbrot doesn't exist above distance 2 with 0,0 so it's pointless so go above
 static const float LIMIT = 2.0;
-
-static const float STEP = ((LIMIT*2.0)/WINDOW_SIDE)/PRECISION;
+static const float STEP = ((LIMIT*2.0)/WINDOW_PIXELS_SIDE_LENGTH)/PRECISION;
 
 SDL_Event event;
 SDL_Renderer* renderer;
@@ -35,24 +39,24 @@ float Distance(const int x0, const int y0, const int x1, const int y1) {
 }
 
 void DrawPointBlack(const int x, const int y) {
-	SDL_RenderDrawPoint(renderer, WINDOW_SIDE * 0.5 + x, WINDOW_SIDE * 0.5 + y);
+	SDL_RenderDrawPoint(renderer, WINDOW_PIXELS_SIDE_LENGTH * 0.5 + x, WINDOW_PIXELS_SIDE_LENGTH * 0.5 + y);
 }
 
 void DrawPixel(const float x, const float y) {
-	float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_SIDE);
-	float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_SIDE);
+	float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
+	float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
 
 	SDL_RenderDrawPoint(renderer, fx, fy);
 }
 
 void DrawPointRed(const int x, const int y) {
 	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-	SDL_RenderDrawPoint(renderer, WINDOW_SIDE * 0.5 + x, WINDOW_SIDE * 0.5 + y);
+	SDL_RenderDrawPoint(renderer, WINDOW_PIXELS_SIDE_LENGTH * 0.5 + x, WINDOW_PIXELS_SIDE_LENGTH * 0.5 + y);
 }
 
 void InitVideo() {
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(WINDOW_SIDE, WINDOW_SIDE, SDL_WINDOW_OPENGL, &window, &renderer);
+	SDL_CreateWindowAndRenderer(WINDOW_PIXELS_SIDE_LENGTH, WINDOW_PIXELS_SIDE_LENGTH, SDL_WINDOW_OPENGL, &window, &renderer);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 	// SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -73,13 +77,13 @@ void DrawMandelbrot() {
 			c.imag(y);
 
 			
-			for (size_t i = 0; i < ITERATIONS; i++) {
+			for (size_t i = 0; i < ITERATIONS_PER_COMPLEX_NUMBER; i++) {
 				n = n * n + c;
                 if (sqrtf(n.real() * n.real() + n.imag() * n.imag()) > 2.0) 
                 {
-				    float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_SIDE);
-                    float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_SIDE);
-                    float color = ((float)i / (float)ITERATIONS)*255;
+				    float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
+                    float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
+                    float color = ((float)i / (float)ITERATIONS_PER_COMPLEX_NUMBER)*255;
                     SDL_SetRenderDrawColor(renderer, color, color, color, 255);
                     SDL_RenderDrawPoint(renderer, fx, fy);
                     break;
