@@ -11,7 +11,6 @@ static const int WINDOW_PIXELS_SIDE_LENGTH = 1000;
 // Less iterations = faster but blobby Mandelbrot
 static const int ITERATIONS_PER_COMPLEX_NUMBER = 50;
 
-
 // <1.0 = you risk to generate an image with holes (super fast)
 // 1.0 = 1 complex point tested / pixel (normal nice image)
 // >1.0 = more complex points tested / pixel (super-resolution SLOWER)
@@ -24,7 +23,7 @@ static const float PRECISION = 4.0f;
 // The zoom level
 // Mandelbrot doesn't exist above distance 2 with 0,0 so it's pointless so go above
 static const float LIMIT = 2.0;
-static const float STEP = ((LIMIT*2.0)/WINDOW_PIXELS_SIDE_LENGTH)/PRECISION;
+static const float STEP = ((LIMIT * 2.0) / WINDOW_PIXELS_SIDE_LENGTH) / PRECISION;
 
 SDL_Event event;
 SDL_Renderer* renderer;
@@ -56,7 +55,8 @@ void DrawPointRed(const int x, const int y) {
 
 void InitVideo() {
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(WINDOW_PIXELS_SIDE_LENGTH, WINDOW_PIXELS_SIDE_LENGTH, SDL_WINDOW_OPENGL, &window, &renderer);
+	SDL_CreateWindowAndRenderer(
+		WINDOW_PIXELS_SIDE_LENGTH, WINDOW_PIXELS_SIDE_LENGTH, SDL_WINDOW_OPENGL, &window, &renderer);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 	// SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -65,46 +65,34 @@ void InitVideo() {
 void DrawMandelbrot() {
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-
-	for (float y = -LIMIT; y < LIMIT; y += STEP) {
-		for (float x = -LIMIT; x < LIMIT; x += STEP) {
-			// for (size_t j = 0; j < ITERATIONS; j++) {
+	for (float x = -LIMIT; x < LIMIT; x += STEP) {
+		for (float y = -LIMIT; y < LIMIT; y += STEP) {
+			
 			std::complex<float> n;
-			n.real(0);
-			n.imag(0);
-			std::complex<float> c;
-			c.real(x);
-			c.imag(y);
+			std::complex<float> c(x,y);
 
-			
-			for (size_t i = 0; i < ITERATIONS_PER_COMPLEX_NUMBER; i++) {
+			for (int i = 0; i < ITERATIONS_PER_COMPLEX_NUMBER; i++) {
 				n = n * n + c;
-                if (sqrtf(n.real() * n.real() + n.imag() * n.imag()) > 2.0) 
-                {
-				    float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
-                    float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
-                    float color = ((float)i / (float)ITERATIONS_PER_COMPLEX_NUMBER)*255;
-                    SDL_SetRenderDrawColor(renderer, color, color, color, 255);
-                    SDL_RenderDrawPoint(renderer, fx, fy);
-                    break;
-			    }
+				if (sqrtf(n.real() * n.real() + n.imag() * n.imag()) > 2.0) {
+					float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
+					float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
+					float color = ((float)i / (float)ITERATIONS_PER_COMPLEX_NUMBER) * 255;
+					SDL_SetRenderDrawColor(renderer, color, color, color, 255);
+					SDL_RenderDrawPoint(renderer, fx, fy);
+					break;
+				}
 			}
-
-			
-            
 		}
 
-    
-
+		const auto percentage = (x + LIMIT) / (LIMIT * 2.0f);
+		std::stringstream ss;
+		ss << "Mandelbrot - Status: ";
+		ss << ceil(percentage * 100.0f);
+		ss << "%";
+		SDL_SetWindowTitle(window, ss.str().c_str());
 		SDL_RenderPresent(renderer);
 	}
-
-	std::cout << "Done." << std::endl;
-
-	SDL_RenderPresent(renderer);
-
-	// for (int i = 0; i < WINDOW_WIDTH; ++i)
-	// 	DrawPoint(i, i);
+	SDL_SetWindowTitle(window, "Mandelbrot - Status: Done!");
 }
 
 void WaitForExit() {
