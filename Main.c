@@ -12,16 +12,11 @@ static const int WINDOW_PIXELS_SIDE_LENGTH = 1000;
 // Less iterations = faster but blobby Mandelbrot
 static const int ITERATIONS_PER_COMPLEX_NUMBER = 50;
 
-
+// Color opacity * this
 static const float COLOR_MULTIPLIER = 4.0f;
 
-// <1.0 = you risk to generate an image with holes (super fast)
-// 1.0 = 1 complex point tested / pixel (normal nice image)
-// >1.0 = more complex points tested / pixel (super-resolution SLOWER)
-
-
 // The zoom level
-// Mandelbrot doesn't exist above distance 2 with 0,0 so it's pointless so go above
+// Mandelbrot doesn't exist above distance 2 with 0,0 so it's pointless to go above
 static const float LIMIT = 2.0F;
 
 SDL_Event event;
@@ -36,11 +31,8 @@ void InitVideo() {
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_CreateWindowAndRenderer(
 		WINDOW_PIXELS_SIDE_LENGTH, WINDOW_PIXELS_SIDE_LENGTH, SDL_WINDOW_OPENGL, &window, &renderer);
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
-	//SDL_SetRenderDrawColor(renderer, 18, 40, 99, 255);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
-	// SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 }
 
 float* CalculateMandelbrot() {
@@ -72,7 +64,7 @@ float* CalculateMandelbrot() {
 			const float n_real = creal(n);
 			const float n_imag = cimag(n);
 
-			// If the complex number distance with the origin is > 2 than it's unstable
+			// If the complex number distance with the origin is > 2 then it's unstable
 			if (n_real * n_real + n_imag * n_imag > 4.0) {
 				// Stability color is based on number of iterations reached
 				*(stability + i) = ((float)(j) / (float)(ITERATIONS_PER_COMPLEX_NUMBER));
@@ -86,15 +78,16 @@ float* CalculateMandelbrot() {
 
 void DrawMandelbrot(const float* const stabilityPoints) {
 	assert(stabilityPoints != NULL);
-	
+
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	for (int i = 0; i < WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH; i++) {
 		const int x = i % WINDOW_PIXELS_SIDE_LENGTH;
 		const int y = i / WINDOW_PIXELS_SIDE_LENGTH;
 		const float color = stabilityPoints[i] * 255;
-	
-		SDL_SetRenderDrawColor(renderer, color, color, 255-color, MIN(255*stabilityPoints[i]*COLOR_MULTIPLIER, 255));
-	
+
+		SDL_SetRenderDrawColor(
+			renderer, color, color, 255 - color, MIN(255 * stabilityPoints[i] * COLOR_MULTIPLIER, 255));
+
 		SDL_RenderDrawPoint(renderer, x, y);
 	}
 	// Draw image on screen
