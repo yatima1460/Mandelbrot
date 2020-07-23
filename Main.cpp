@@ -3,7 +3,7 @@
 #include <SDL2/SDL.h>
 #include <complex>
 #include <iostream>
-
+#include <vector>
 // The window is a square for now
 static const int WINDOW_PIXELS_SIDE_LENGTH = 1000;
 
@@ -65,34 +65,36 @@ void InitVideo() {
 void DrawMandelbrot() {
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
+	std::vector<float> stability;
 	for (float x = -LIMIT; x < LIMIT; x += STEP) {
 		for (float y = -LIMIT; y < LIMIT; y += STEP) {
-			
 			std::complex<float> n;
-			std::complex<float> c(x,y);
+			std::complex<float> c(x, y);
 
 			for (int i = 0; i < ITERATIONS_PER_COMPLEX_NUMBER; i++) {
 				n = n * n + c;
 				if (n.real() * n.real() + n.imag() * n.imag() > 4.0) {
-					float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
-					float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
+					int fx = (int)map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
+					int fy = (int)map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
 					float color = ((float)i / (float)ITERATIONS_PER_COMPLEX_NUMBER) * 255;
-					SDL_SetRenderDrawColor(renderer, color, color, color, 255);
-					SDL_RenderDrawPoint(renderer, fx, fy);
+                    stability.push_back(color);
+                    
+					//stability[fy * WINDOW_PIXELS_SIDE_LENGTH + fx] = color;
 					break;
 				}
 			}
 		}
-
-		const auto percentage = (x + LIMIT) / (LIMIT * 2.0f);
-		std::stringstream ss;
-		ss << "Mandelbrot - Status: ";
-		ss << ceil(percentage * 100.0f);
-		ss << "%";
-		SDL_SetWindowTitle(window, ss.str().c_str());
-		SDL_RenderPresent(renderer);
 	}
+	for (size_t i = 0; i < WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH; i++) {
+		const int x = i % WINDOW_PIXELS_SIDE_LENGTH;
+		const int y = i / WINDOW_PIXELS_SIDE_LENGTH;
+		const float color = stability[i];
+		SDL_SetRenderDrawColor(renderer, color, color, color, 255);
+		SDL_RenderDrawPoint(renderer, x, y);
+	}
+	SDL_RenderPresent(renderer);
 	SDL_SetWindowTitle(window, "Mandelbrot - Status: Done!");
+	
 }
 
 void WaitForExit() {
