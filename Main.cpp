@@ -73,7 +73,7 @@ void DrawMandelbrot() {
 
 			for (int i = 0; i < ITERATIONS_PER_COMPLEX_NUMBER; i++) {
 				n = n * n + c;
-				if (sqrtf(n.real() * n.real() + n.imag() * n.imag()) > 2.0) {
+				if (n.real() * n.real() + n.imag() * n.imag() > 4.0) {
 					float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
 					float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_PIXELS_SIDE_LENGTH);
 					float color = ((float)i / (float)ITERATIONS_PER_COMPLEX_NUMBER) * 255;
