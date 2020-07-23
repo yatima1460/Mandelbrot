@@ -49,6 +49,7 @@ std::vector<float> CalculateMandelbrot() {
     std::complex<float> n;
     std::complex<float> c;
 
+    
 	std::vector<float> stability(WINDOW_PIXELS_SIDE_LENGTH * WINDOW_PIXELS_SIDE_LENGTH);
 	for (float x = -LIMIT; x < LIMIT; x += STEP) {
 		for (float y = -LIMIT; y < LIMIT; y += STEP) {
@@ -112,10 +113,16 @@ int main() {
     SDL_SetWindowTitle(window, "Mandelbrot - Status: Initializing...");
 	InitVideo();
     SDL_SetWindowTitle(window, "Mandelbrot - Status: Generating...");
+    const auto beginTime = SDL_GetTicks();
     const auto stabilityPoints = CalculateMandelbrot();
+    const auto endTime = SDL_GetTicks();
     SDL_SetWindowTitle(window, "Mandelbrot - Status: Drawing...");
 	DrawMandelbrot(stabilityPoints);
-    SDL_SetWindowTitle(window, "Mandelbrot - Status: Done!");
+    std::stringstream ss;
+    ss << "Mandelbrot - Status: Done! Time: ";
+    ss << endTime - beginTime;
+    ss << "ms";
+    SDL_SetWindowTitle(window, ss.str().c_str());
 	WaitForExit();
 	DestroyVideo();
 
