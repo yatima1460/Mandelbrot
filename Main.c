@@ -2,22 +2,27 @@
 #include <assert.h>
 #include <complex.h>
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 // The window is a square for now
 static const int WINDOW_PIXELS_SIDE_LENGTH = 1000;
 
 // More iterations = slower but more sharp edges
 // Less iterations = faster but blobby Mandelbrot
-static const int ITERATIONS_PER_COMPLEX_NUMBER = 30;
+static const int ITERATIONS_PER_COMPLEX_NUMBER = 50;
+
+
+static const float COLOR_MULTIPLIER = 4.0f;
 
 // <1.0 = you risk to generate an image with holes (super fast)
 // 1.0 = 1 complex point tested / pixel (normal nice image)
 // >1.0 = more complex points tested / pixel (super-resolution SLOWER)
-static const float DENSITY = 16.0F;
+
 
 // The zoom level
 // Mandelbrot doesn't exist above distance 2 with 0,0 so it's pointless so go above
 static const float LIMIT = 2.0F;
-static const float STEP = ((LIMIT * 2.0F) / WINDOW_PIXELS_SIDE_LENGTH) / DENSITY;
 
 SDL_Event event;
 SDL_Renderer* renderer;
@@ -59,9 +64,7 @@ float* CalculateMandelbrot() {
 		n = 0 + 0 * I;
 		c = x + y * I;
 
-		
-		for (int j = 0;  j < ITERATIONS_PER_COMPLEX_NUMBER; j++)
-		{
+		for (int j = 0; j < ITERATIONS_PER_COMPLEX_NUMBER; j++) {
 			// Multiply c = zoom level
 			// Add complex = offset
 			n = n * n + c;
@@ -69,26 +72,13 @@ float* CalculateMandelbrot() {
 			const float n_real = creal(n);
 			const float n_imag = cimag(n);
 
-			*(stability + py * WINDOW_PIXELS_SIDE_LENGTH + px) = 0;
 			// If the complex number distance with the origin is > 2 than it's unstable
 			if (n_real * n_real + n_imag * n_imag > 4.0) {
-
-				
-					const float color = ((float)(j) / (float)(ITERATIONS_PER_COMPLEX_NUMBER));
-					*(stability + py * WINDOW_PIXELS_SIDE_LENGTH + px) = color;
-				
-				
-				break;
-				
 				// Stability color is based on number of iterations reached
-				
+				*(stability + i) = ((float)(j) / (float)(ITERATIONS_PER_COMPLEX_NUMBER));
+				break;
 			}
 		}
-		
-		
-			
-		
-		
 	}
 
 	return stability;
@@ -103,7 +93,7 @@ void DrawMandelbrot(const float* const stabilityPoints) {
 		const int y = i / WINDOW_PIXELS_SIDE_LENGTH;
 		const float color = stabilityPoints[i] * 255;
 	
-		SDL_SetRenderDrawColor(renderer, color, color, 255-color, 255*stabilityPoints[i]);
+		SDL_SetRenderDrawColor(renderer, color, color, 255-color, MIN(255*stabilityPoints[i]*COLOR_MULTIPLIER, 255));
 	
 		SDL_RenderDrawPoint(renderer, x, y);
 	}
