@@ -7,17 +7,16 @@
 static const int WINDOW_WIDTH = 1000;
 static const int WINDOW_HEIGHT = 1000;
 
-static const float LIMIT = 1.0f;
-static const float STEP = 0.05f;
-static const int ITERATIONS = 500;
+static const float LIMIT = 2.0f;
+static const float STEP = 0.0025f;
+static const int ITERATIONS = 100;
 
 SDL_Event event;
 SDL_Renderer* renderer;
 SDL_Window* window;
 
-float map(float x, float in_min, float in_max, float out_min, float out_max)
-{
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+float map(float x, float in_min, float in_max, float out_min, float out_max) {
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 float Distance(const int x0, const int y0, const int x1, const int y1) {
@@ -25,22 +24,18 @@ float Distance(const int x0, const int y0, const int x1, const int y1) {
 }
 
 void DrawPointBlack(const int x, const int y) {
-   
-
 	SDL_RenderDrawPoint(renderer, WINDOW_WIDTH * 0.5 + x, WINDOW_HEIGHT * 0.5 + y);
 }
 
+void DrawPixel(const float x, const float y) {
+	float fx = map(x, -LIMIT, LIMIT, 0, WINDOW_WIDTH);
+	float fy = map(y, -LIMIT, LIMIT, 0, WINDOW_HEIGHT);
 
-void DrawPixel(const float x, const float y)
-{
-    float fx = map(x,-LIMIT,LIMIT,0,WINDOW_WIDTH);
-    float fy = map(y,-LIMIT,LIMIT,0,WINDOW_HEIGHT);
-
-    SDL_RenderDrawPoint(renderer, fx, fy);
+	SDL_RenderDrawPoint(renderer, fx, fy);
 }
 
 void DrawPointRed(const int x, const int y) {
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 	SDL_RenderDrawPoint(renderer, WINDOW_WIDTH * 0.5 + x, WINDOW_HEIGHT * 0.5 + y);
 }
 
@@ -53,66 +48,44 @@ void InitVideo() {
 }
 
 void DrawMandelbrot() {
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	for (float y = -LIMIT; y < LIMIT; y += STEP) {
+		for (float x = -LIMIT; x < LIMIT; x += STEP) {
+			 //for (size_t j = 0; j < ITERATIONS; j++) {
+				std::complex<float> n;
+				n.real(0);
+				n.imag(0);
+				std::complex<float> c;
+				c.real(x);
+				c.imag(y);
 
-    
-     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-for (float y = -LIMIT; y < LIMIT; y += STEP)
-        {
-    for (float x = -LIMIT; x < LIMIT; x += STEP)
-    {
-        
+                bool stable = true;
+				for (size_t i = 0; i < ITERATIONS; i++) {
+					n = n * n  + c;
+                    
+                        
+				}
 
+                if (sqrtf(n.real()*n.real()+n.imag()*n.imag()) < 2.0f)
+                    {
+                        DrawPixel(n.real(), n.imag());
+                    }
+               
+				   
+			// }
+		}
 
-        for (size_t j = 0; j < ITERATIONS; j++)
-        {
-            std::complex<float> n;
-            n.real(0);
-            n.imag(0);
-            std::complex<float> c;
-            c.real(x);
-            c.imag(y);
+	xloop:;
 
-            for (size_t i = 0; i < j; i++)
-            {
-               n = n*n + c ;
-             
-            }
+		SDL_RenderPresent(renderer);
+	}
 
-            // if (sqrtf(n.real()*n.real() + n.imag()*n.imag()) > 2.0f)
-            //      goto xloop;
-            
-            
-            DrawPixel(n.real(), n.imag());
-            //DrawPointBlack(x,y);
-            // DrawPointRed();
+	std::cout << "Done." << std::endl;
 
-            //SDL_Delay(1);
-
-            
-
-            //std::cout << n.real() << ";" << n.imag() << std::endl;
-            
-        }
-
-        }
-        
-           
-        xloop:;
-
-         SDL_RenderPresent(renderer);
-        
-    }
-
-    std::cout << "Done." << std::endl;
-
-    SDL_RenderPresent(renderer);
-      
-
+	SDL_RenderPresent(renderer);
 
 	// for (int i = 0; i < WINDOW_WIDTH; ++i)
 	// 	DrawPoint(i, i);
-
-	
 }
 
 void WaitForExit() {
